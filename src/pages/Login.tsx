@@ -15,7 +15,10 @@ const Login = () => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       navigate('/');
-    } catch (err) { alert('Connexion échouée'); }
+    } catch (err) { 
+      console.error(err);
+      alert('Connexion échouée'); 
+    }
   };
 
   return (

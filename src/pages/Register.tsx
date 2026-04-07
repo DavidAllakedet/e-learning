@@ -12,7 +12,10 @@ const Register = () => {
     try {
       await api.post('/auth/register', formData);
       navigate('/login');
-    } catch (err) { alert('Erreur lors de l\'inscription'); }
+    } catch (err) { 
+      console.error(err);
+      alert('Erreur lors de l\'inscription'); 
+    }
   };
 
   return (
