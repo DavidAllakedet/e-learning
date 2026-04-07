@@ -21,7 +21,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({ url, type }) => {
   }
 
   return (
-    <div className="w-full h-[600px] rounded-xl overflow-hidden border border-slate-200">
+    <div className="w-full h-150 rounded-xl overflow-hidden border border-slate-200">
       <iframe 
         src={`${url}#toolbar=0`} 
         className="w-full h-full"
