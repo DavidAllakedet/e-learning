@@ -29,6 +29,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
   }, []);
 
+  const updateUser = useCallback((next: AuthUser) => {
+    localStorage.setItem('user', JSON.stringify(next));
+    setUser(next);
+  }, []);
+
   const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
     setError(null);
@@ -71,12 +76,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       login,
       logout,
       register,
+      updateUser,
       isStudent: role === ROLES.STUDENT,
       isTeacher: role === ROLES.TEACHER,
       isAdmin: role === ROLES.ADMIN || role === ROLES.SUPER_ADMIN,
       isSuperAdmin: role === ROLES.SUPER_ADMIN,
     };
-  }, [user, loading, error, login, logout, register]);
+  }, [user, loading, error, login, logout, register, updateUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

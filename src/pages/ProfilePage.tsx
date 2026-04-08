@@ -1,26 +1,87 @@
-import { useState } from 'react';
-import { User as UserIcon, Mail, Shield, Camera, Bell, Lock, Globe, CreditCard, ChevronRight } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { User as UserIcon, Mail, Shield, Camera, Bell, Lock, Globe, CreditCard, ChevronRight, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
+import api from '../services/api';
+import { useAuth } from '../hooks/useAuth';
+import { cn } from '../utils/cn';
 
-interface User {
+type Profile = {
+  id: string;
   firstName: string;
   lastName: string;
   email: string;
   role: string;
-  avatar?: string;
-}
+  avatar?: string | null;
+  university?: string | null;
+  className?: string | null;
+  interests?: string | null;
+  institution?: string | null;
+  specialty?: string | null;
+  bio?: string | null;
+};
+
+type Notification = {
+  id: string;
+  title: string;
+  message: string;
+  type: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
+  read: boolean;
+  createdAt: string;
+};
 
 const ProfilePage = () => {
-  const [user] = useState<User | null>(() => {
-    const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const { user, updateUser } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [university, setUniversity] = useState('');
+  const [className, setClassName] = useState('');
+  const [interests, setInterests] = useState('');
+  const [institution, setInstitution] = useState('');
+  const [specialty, setSpecialty] = useState('');
+  const [bio, setBio] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await api.get('/users/profile');
+        setProfile(res.data);
+        setFirstName(res.data.firstName || '');
+        setLastName(res.data.lastName || '');
+        setUniversity(res.data.university || '');
+        setClassName(res.data.className || '');
+        setInterests(res.data.interests || '');
+        setInstitution(res.data.institution || '');
+        setSpecialty(res.data.specialty || '');
+        setBio(res.data.bio || '');
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   if (!user) return null;
+  if (loading || !profile) {
+    return (
+      <div className="h-[60vh] flex items-center justify-center">
+        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Chargement...</p>
+      </div>
+    );
+  }
 
   const tabs = [
     { id: 'profile', label: 'Profil Public', icon: UserIcon },
@@ -28,6 +89,99 @@ const ProfilePage = () => {
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'billing', label: 'Facturation', icon: CreditCard },
   ];
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      const payload: {
+        firstName: string;
+        lastName: string;
+        university?: string;
+        className?: string;
+        interests?: string;
+        institution?: string;
+        specialty?: string;
+        bio?: string;
+      } = {
+        firstName,
+        lastName,
+        university: user.role === 'STUDENT' ? university : undefined,
+        className: user.role === 'STUDENT' ? className : undefined,
+        interests: user.role === 'STUDENT' ? interests : undefined,
+        institution: user.role === 'TEACHER' ? institution : undefined,
+        specialty: user.role === 'TEACHER' ? specialty : undefined,
+        bio: user.role === 'TEACHER' ? bio : undefined,
+      };
+      const res = await api.put('/users/profile', payload);
+      setProfile(prev => prev ? { ...prev, ...payload } : prev);
+      updateUser({ ...user, firstName: res.data.user.firstName, lastName: res.data.user.lastName, avatar: res.data.user.avatar });
+    } catch (error) {
+      console.error(error);
+      alert('Erreur lors de la mise à jour du profil');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!newPassword.trim()) return;
+    setIsSaving(true);
+    try {
+      await api.put('/users/profile', { password: newPassword });
+      setNewPassword('');
+      alert('Mot de passe mis à jour');
+    } catch (error) {
+      console.error(error);
+      alert('Erreur lors de la mise à jour du mot de passe');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePickAvatar = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarSelected = async (file: File | null) => {
+    if (!file) return;
+    setIsUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await api.post('/users/profile/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setProfile(prev => prev ? { ...prev, avatar: res.data.user.avatar } : prev);
+      updateUser({ ...user, avatar: res.data.user.avatar });
+    } catch (error) {
+      console.error(error);
+      alert('Erreur lors de l\'upload de l\'avatar');
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const fetchNotifications = async () => {
+    setNotifLoading(true);
+    try {
+      const res = await api.get('/notifications');
+      setNotifications(res.data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setNotifLoading(false);
+    }
+  };
+
+  const markNotificationRead = async (id: string) => {
+    try {
+      await api.put(`/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 animate-in fade-in duration-500 pb-20">
@@ -40,13 +194,33 @@ const ProfilePage = () => {
         <div className="absolute -bottom-16 left-12 flex items-end space-x-8">
           <div className="relative group">
             <div className="w-32 h-32 rounded-5xl bg-white p-1.5 shadow-2xl shadow-indigo-200">
-              <div className="w-full h-full rounded-4xl bg-slate-100 flex items-center justify-center font-black text-slate-300 text-4xl group-hover:bg-slate-200 transition-colors">
-                {user.firstName[0]}{user.lastName[0]}
-              </div>
+              {profile.avatar ? (
+                <img
+                  src={`http://localhost:5000${profile.avatar}`}
+                  alt="Avatar"
+                  className="w-full h-full rounded-4xl object-cover"
+                />
+              ) : (
+                <div className="w-full h-full rounded-4xl bg-slate-100 flex items-center justify-center font-black text-slate-300 text-4xl group-hover:bg-slate-200 transition-colors">
+                  {user.firstName[0]}{user.lastName[0]}
+                </div>
+              )}
             </div>
-            <button className="absolute bottom-2 right-2 w-10 h-10 bg-indigo-600 rounded-2xl border-4 border-white flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
+            <button
+              type="button"
+              onClick={handlePickAvatar}
+              className="absolute bottom-2 right-2 w-10 h-10 bg-indigo-600 rounded-2xl border-4 border-white flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform disabled:opacity-60"
+              disabled={isUploadingAvatar}
+            >
               <Camera className="w-4 h-4" />
             </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(e) => handleAvatarSelected(e.target.files?.[0] || null)}
+            />
           </div>
           <div className="pb-4">
             <h1 className="text-3xl font-black text-white tracking-tight drop-shadow-md">
@@ -112,43 +286,92 @@ const ProfilePage = () => {
                 <CardDescription className="text-slate-500 font-medium">Mettez à jour vos informations publiques et privées.</CardDescription>
               </CardHeader>
               <CardContent className="p-8">
-                <form className="space-y-8">
+                <form className="space-y-8" onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <Input 
                       label="Prénom" 
-                      defaultValue={user.firstName}
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
                       className="rounded-xl bg-slate-50 border-none"
                     />
                     <Input 
                       label="Nom" 
-                      defaultValue={user.lastName}
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
                       className="rounded-xl bg-slate-50 border-none"
                     />
                     <Input 
                       label="Email professionnel" 
-                      defaultValue={user.email}
+                      value={user.email}
                       type="email"
                       icon={<Mail className="w-4 h-4" />}
-                      className="rounded-xl bg-slate-50 border-none"
-                    />
-                    <Input 
-                      label="Téléphone" 
-                      placeholder="+33 6 12 34 56 78"
-                      className="rounded-xl bg-slate-50 border-none"
+                      className="rounded-xl bg-slate-50 border-none opacity-80"
                     />
                   </div>
 
-                  <div className="space-y-3">
-                    <label className="text-sm font-black text-slate-700 uppercase tracking-widest ml-1">Biographie</label>
-                    <textarea 
-                      className="w-full min-h-37.5 p-5 rounded-4xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500/20 outline-none text-slate-600 font-medium transition-all"
-                      placeholder="Parlez-nous de votre parcours..."
-                    />
-                  </div>
+                  {user.role === 'STUDENT' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <Input
+                        label="Université"
+                        value={university}
+                        onChange={(e) => setUniversity(e.target.value)}
+                        className="rounded-xl bg-slate-50 border-none"
+                      />
+                      <Input
+                        label="Classe"
+                        value={className}
+                        onChange={(e) => setClassName(e.target.value)}
+                        className="rounded-xl bg-slate-50 border-none"
+                      />
+                      <Input
+                        label="Domaines d'intérêt"
+                        value={interests}
+                        onChange={(e) => setInterests(e.target.value)}
+                        className="rounded-xl bg-slate-50 border-none md:col-span-2"
+                      />
+                    </div>
+                  ) : user.role === 'TEACHER' ? (
+                    <div className="space-y-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <Input
+                          label="Établissement"
+                          value={institution}
+                          onChange={(e) => setInstitution(e.target.value)}
+                          className="rounded-xl bg-slate-50 border-none"
+                        />
+                        <Input
+                          label="Spécialité"
+                          value={specialty}
+                          onChange={(e) => setSpecialty(e.target.value)}
+                          className="rounded-xl bg-slate-50 border-none"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-sm font-black text-slate-700 uppercase tracking-widest ml-1">Bio</label>
+                        <textarea
+                          value={bio}
+                          onChange={(e) => setBio(e.target.value)}
+                          className="w-full min-h-37.5 p-5 rounded-4xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500/20 outline-none text-slate-600 font-medium transition-all"
+                          placeholder="Décrivez votre expérience..."
+                        />
+                      </div>
+                    </div>
+                  ) : null}
 
                   <div className="pt-4 flex justify-end space-x-4">
-                    <Button variant="ghost" className="rounded-xl font-black text-slate-500">Annuler</Button>
-                    <Button className="rounded-xl px-10 h-12 shadow-lg shadow-indigo-100">Enregistrer les modifications</Button>
+                    <Button type="button" variant="ghost" className="rounded-xl font-black text-slate-500" onClick={() => {
+                      setFirstName(profile.firstName || '');
+                      setLastName(profile.lastName || '');
+                      setUniversity(profile.university || '');
+                      setClassName(profile.className || '');
+                      setInterests(profile.interests || '');
+                      setInstitution(profile.institution || '');
+                      setSpecialty(profile.specialty || '');
+                      setBio(profile.bio || '');
+                    }}>Annuler</Button>
+                    <Button type="submit" className="rounded-xl px-10 h-12 shadow-lg shadow-indigo-100" isLoading={isSaving}>
+                      Enregistrer les modifications
+                    </Button>
                   </div>
                 </form>
               </CardContent>
@@ -162,23 +385,17 @@ const ProfilePage = () => {
                 <CardDescription className="text-slate-500 font-medium">Gérez votre mot de passe et vos paramètres de sécurité.</CardDescription>
               </CardHeader>
               <CardContent className="p-8 space-y-10">
-                <form className="space-y-6 max-w-md">
-                  <Input 
-                    label="Mot de passe actuel" 
-                    type="password"
-                    className="rounded-xl bg-slate-50 border-none"
-                  />
+                <form className="space-y-6 max-w-md" onSubmit={(e) => { e.preventDefault(); handleUpdatePassword(); }}>
                   <Input 
                     label="Nouveau mot de passe" 
                     type="password"
                     className="rounded-xl bg-slate-50 border-none"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
                   />
-                  <Input 
-                    label="Confirmer le nouveau mot de passe" 
-                    type="password"
-                    className="rounded-xl bg-slate-50 border-none"
-                  />
-                  <Button className="w-full rounded-xl h-12 shadow-lg shadow-indigo-100">Mettre à jour le mot de passe</Button>
+                  <Button type="submit" className="w-full rounded-xl h-12 shadow-lg shadow-indigo-100" isLoading={isSaving}>
+                    Mettre à jour le mot de passe
+                  </Button>
                 </form>
 
                 <div className="pt-10 border-t border-slate-50">
@@ -196,6 +413,73 @@ const ProfilePage = () => {
                     <Button variant="outline" className="rounded-xl bg-white border-2 text-indigo-600 font-black h-10 px-6">Activer</Button>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === 'notifications' && (
+            <Card className="p-0 border-none shadow-xl shadow-slate-200/40 overflow-hidden">
+              <CardHeader className="p-8 border-b border-slate-50 bg-white">
+                <CardTitle className="text-2xl font-black text-slate-900">Notifications</CardTitle>
+                <CardDescription className="text-slate-500 font-medium">Historique des alertes et événements (devoirs, notes, contenus).</CardDescription>
+              </CardHeader>
+              <CardContent className="p-8 space-y-6">
+                <div className="flex items-center justify-between">
+                  <Button variant="outline" className="rounded-xl border-2" onClick={fetchNotifications}>
+                    Rafraîchir
+                  </Button>
+                  <Badge variant="outline" className="rounded-lg">
+                    {notifications.filter(n => !n.read).length} non lue(s)
+                  </Badge>
+                </div>
+
+                {notifLoading ? (
+                  <div className="h-40 flex flex-col items-center justify-center space-y-3">
+                    <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Chargement...</p>
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="h-40 flex flex-col items-center justify-center space-y-3 text-center">
+                    <Bell className="w-10 h-10 text-slate-200" />
+                    <p className="text-slate-500 font-medium">Aucune notification.</p>
+                    <Button variant="ghost" className="text-indigo-600 font-black" onClick={fetchNotifications}>
+                      Charger
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-50 rounded-3xl border border-slate-100 overflow-hidden bg-white">
+                    {notifications.map(n => (
+                      <button
+                        key={n.id}
+                        type="button"
+                        onClick={() => !n.read && markNotificationRead(n.id)}
+                        className={cn(
+                          'w-full text-left p-5 hover:bg-slate-50 transition-colors flex items-start space-x-4',
+                          !n.read && 'bg-indigo-50/30'
+                        )}
+                      >
+                        <div className={cn(
+                          'w-10 h-10 rounded-2xl flex items-center justify-center shrink-0',
+                          n.type === 'SUCCESS' ? 'bg-emerald-50 text-emerald-500' :
+                          n.type === 'WARNING' ? 'bg-amber-50 text-amber-500' :
+                          n.type === 'ERROR' ? 'bg-rose-50 text-rose-500' : 'bg-indigo-50 text-indigo-500'
+                        )}>
+                          {n.type === 'SUCCESS' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-4">
+                            <p className="text-sm font-black text-slate-900 truncate">{n.title}</p>
+                            <p className="text-[10px] font-black text-slate-300 uppercase shrink-0">
+                              {new Date(n.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <p className="text-sm text-slate-600 font-medium mt-1 line-clamp-2">{n.message}</p>
+                          {!n.read && <p className="mt-2 text-[10px] font-black text-indigo-600 uppercase tracking-widest">Nouvelle</p>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

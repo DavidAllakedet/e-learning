@@ -21,6 +21,10 @@ import StudentAssignments from './pages/student/StudentAssignments';
 import StudentQuizzes from './pages/student/StudentQuizzes';
 import TeacherGrading from './pages/teacher/TeacherGrading';
 import TeacherStats from './pages/teacher/TeacherStats';
+import TeacherQuizzes from './pages/teacher/TeacherQuizzes';
+import TeacherCourses from './pages/teacher/TeacherCourses';
+import TeacherQuizEditor from './pages/teacher/TeacherQuizEditor';
+import TeacherCourseEnrollments from './pages/teacher/TeacherCourseEnrollments';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCourses from './pages/admin/AdminCourses';
 import AdminReports from './pages/admin/AdminReports';
@@ -69,8 +73,12 @@ function App() {
 
               <Route element={<RoleBasedRoute allowedRoles={[ROLES.TEACHER, ROLES.SUPER_ADMIN]} />}>
                 <Route path="teacher/dashboard" element={<TeacherDashboard />} />
+                <Route path="teacher/courses" element={<TeacherCourses />} />
                 <Route path="teacher/courses/new" element={<CourseEditor />} />
                 <Route path="teacher/courses/:id/edit" element={<CourseEditor />} />
+                <Route path="teacher/courses/:id/enrollments" element={<TeacherCourseEnrollments />} />
+                <Route path="teacher/quizzes" element={<TeacherQuizzes />} />
+                <Route path="teacher/quizzes/:id/edit" element={<TeacherQuizEditor />} />
                 <Route path="teacher/grading" element={<TeacherGrading />} />
                 <Route path="teacher/stats" element={<TeacherStats />} />
                 <Route path="teacher/profile" element={<ProfilePage />} />

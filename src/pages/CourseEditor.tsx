@@ -53,6 +53,7 @@ interface Course {
   id: string;
   title: string;
   description: string;
+  status?: 'DRAFT' | 'PUBLISHED';
   modules: Module[];
   quizzes: Quiz[];
 }
@@ -67,6 +68,7 @@ const CourseEditor = () => {
   const [createDescription, setCreateDescription] = useState('');
   const [createPrice, setCreatePrice] = useState('0');
   const [isCreating, setIsCreating] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   
   // Content Tab State
   const [activeModule, setActiveModule] = useState<string | null>(null);
@@ -122,6 +124,21 @@ const CourseEditor = () => {
       alert('Erreur lors de la création du cours');
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handlePublishToggle = async () => {
+    if (!course || !id) return;
+    setIsPublishing(true);
+    try {
+      const nextStatus = course.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
+      const res = await api.patch(`/courses/${id}`, { status: nextStatus });
+      setCourse(prev => prev ? { ...prev, status: res.data.status } : prev);
+    } catch (error) {
+      console.error(error);
+      alert('Erreur lors de la publication');
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -297,9 +314,13 @@ const CourseEditor = () => {
             <SettingsIcon className="mr-2 w-4 h-4" />
             Paramètres
           </Button>
-          <Button className="rounded-2xl h-12 px-8 shadow-lg shadow-indigo-100 font-black uppercase tracking-widest text-xs">
+          <Button
+            className="rounded-2xl h-12 px-8 shadow-lg shadow-indigo-100 font-black uppercase tracking-widest text-xs"
+            onClick={handlePublishToggle}
+            isLoading={isPublishing}
+          >
             <Save className="mr-2 w-4 h-4" />
-            Publier
+            {course.status === 'PUBLISHED' ? 'Dépublier' : 'Publier'}
           </Button>
         </div>
       </div>

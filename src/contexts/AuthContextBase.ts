@@ -33,6 +33,7 @@ export type AuthContextValue = {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   register: (data: RegisterPayload) => Promise<void>;
+  updateUser: (next: AuthUser) => void;
   isStudent: boolean;
   isTeacher: boolean;
   isAdmin: boolean;
@@ -40,4 +41,3 @@ export type AuthContextValue = {
 };
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
-

@@ -64,7 +64,11 @@ const SidebarLink = ({ to, icon: Icon, label, active }: SidebarLinkProps) => (
 const MainLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { user: authUser, logout } = useAuth();
-  const user: User | null = authUser ? { firstName: authUser.firstName, lastName: authUser.lastName, role: authUser.role, avatar: authUser.avatar || undefined } : null;
+  const user: User | null = authUser ? {
+    firstName: authUser.firstName, 
+    lastName: authUser.lastName, 
+    role: authUser.role, 
+    avatar: authUser.avatar || undefined } : null;
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const location = useLocation();
@@ -104,7 +108,9 @@ const MainLayout = () => {
     user?.role === 'TEACHER'
       ? [
           { to: '/teacher/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-          { to: '/teacher/courses/new', icon: BookOpen, label: 'Créer un cours' },
+          { to: '/teacher/courses', icon: BookOpen, label: 'Mes cours' },
+          { to: '/teacher/courses/new', icon: GraduationCap, label: 'Créer un cours' },
+          { to: '/teacher/quizzes', icon: HelpCircle, label: 'Quiz' },
           { to: '/teacher/grading', icon: FileText, label: 'Corrections' },
           { to: '/teacher/stats', icon: TrendingUp, label: 'Statistiques' },
           { to: '/catalog', icon: GraduationCap, label: 'Catalogue' },
