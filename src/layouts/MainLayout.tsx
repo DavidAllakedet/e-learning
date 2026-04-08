@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -11,16 +11,32 @@ import {
   Search,
   User as UserIcon,
   TrendingUp,
-  ShieldCheck
+  ShieldCheck,
+  FileText,
+  HelpCircle,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/Badge';
+import api from '../services/api';
+import { useAuth } from '../hooks/useAuth';
 
 interface User {
   firstName: string;
   lastName: string;
   role: string;
   avatar?: string;
+}
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
+  read: boolean;
+  createdAt: string;
 }
 
 interface SidebarLinkProps {
@@ -47,30 +63,73 @@ const SidebarLink = ({ to, icon: Icon, label, active }: SidebarLinkProps) => (
 
 const MainLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [user] = useState<User | null>(() => {
-    const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const { user: authUser, logout } = useAuth();
+  const user: User | null = authUser ? { firstName: authUser.firstName, lastName: authUser.lastName, role: authUser.role, avatar: authUser.avatar || undefined } : null;
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await api.get('/notifications');
+        setNotifications(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await api.put(`/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    logout();
     navigate('/login');
   };
 
-  const menuItems = [
-    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/courses', icon: BookOpen, label: user?.role === 'TEACHER' ? 'Mes Cours' : 'Apprentissage' },
-    { to: '/catalog', icon: GraduationCap, label: 'Catalogue' },
-    { to: '/progress', icon: TrendingUp, label: 'Progression' },
-    { to: '/settings', icon: Settings, label: 'Profil' },
-  ];
+  const menuItems =
+    user?.role === 'TEACHER'
+      ? [
+          { to: '/teacher/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+          { to: '/teacher/courses/new', icon: BookOpen, label: 'Créer un cours' },
+          { to: '/teacher/grading', icon: FileText, label: 'Corrections' },
+          { to: '/teacher/stats', icon: TrendingUp, label: 'Statistiques' },
+          { to: '/catalog', icon: GraduationCap, label: 'Catalogue' },
+          { to: '/teacher/profile', icon: Settings, label: 'Profil' },
+        ]
+      : user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
+        ? [
+            { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+            { to: '/admin/users', icon: UserIcon, label: 'Utilisateurs' },
+            { to: '/admin/courses', icon: BookOpen, label: 'Cours' },
+            { to: '/admin/enrollments', icon: ShieldCheck, label: 'Inscriptions' },
+            { to: '/admin/reports', icon: TrendingUp, label: 'Rapports' },
+            { to: '/admin/settings', icon: Settings, label: 'Paramètres' },
+          ]
+        : [
+            { to: '/student/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+            { to: '/student/courses', icon: BookOpen, label: 'Mes cours' },
+            { to: '/student/quizzes', icon: HelpCircle, label: 'Quiz' },
+            { to: '/student/assignments', icon: FileText, label: 'Devoirs' },
+            { to: '/catalog', icon: GraduationCap, label: 'Catalogue' },
+            { to: '/student/progress', icon: TrendingUp, label: 'Progression' },
+            { to: '/student/profile', icon: Settings, label: 'Profil' },
+          ];
 
-  const adminItems = user?.role === 'ADMIN' ? [
-    { to: '/admin/enrollments', icon: ShieldCheck, label: 'Inscriptions' },
-  ] : [];
+  const adminItems: { to: string; icon: React.ElementType; label: string }[] = [];
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -94,7 +153,7 @@ const MainLayout = () => {
               <SidebarLink 
                 key={item.to}
                 {...item}
-                active={location.pathname === item.to}
+                active={location.pathname === item.to || location.pathname.startsWith(item.to + '/')}
               />
             ))}
             
@@ -105,7 +164,7 @@ const MainLayout = () => {
                   <SidebarLink 
                     key={item.to}
                     {...item}
-                    active={location.pathname === item.to}
+                    active={location.pathname === item.to || location.pathname.startsWith(item.to + '/')}
                   />
                 ))}
               </div>
@@ -146,10 +205,67 @@ const MainLayout = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
-            </Button>
+            <div className="relative">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="relative"
+                onClick={() => setShowNotifications(!showNotifications)}
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+                )}
+              </Button>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-4 w-80 bg-white rounded-[2rem] shadow-2xl shadow-indigo-200/50 border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-200 z-50">
+                  <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+                    <h3 className="font-black text-slate-900">Notifications</h3>
+                    {unreadCount > 0 && <Badge variant="primary" className="rounded-lg">{unreadCount} nouvelles</Badge>}
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-10 text-center">
+                        <Bell className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Aucune notification</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-slate-50">
+                        {notifications.map(n => (
+                          <div 
+                            key={n.id} 
+                            onClick={() => !n.read && handleMarkAsRead(n.id)}
+                            className={cn(
+                              "p-4 hover:bg-slate-50 transition-colors cursor-pointer flex items-start space-x-3",
+                              !n.read && "bg-indigo-50/30"
+                            )}
+                          >
+                            <div className={cn(
+                              "w-8 h-8 rounded-xl flex items-center justify-center shrink-0",
+                              n.type === 'SUCCESS' ? "bg-emerald-50 text-emerald-500" : 
+                              n.type === 'WARNING' ? "bg-amber-50 text-amber-500" :
+                              n.type === 'ERROR' ? "bg-rose-50 text-rose-500" : "bg-indigo-50 text-indigo-500"
+                            )}>
+                              {n.type === 'SUCCESS' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-slate-900 truncate">{n.title}</p>
+                              <p className="text-xs text-slate-500 font-medium line-clamp-2 mt-0.5">{n.message}</p>
+                              <p className="text-[10px] font-black text-slate-300 uppercase mt-2">
+                                {new Date(n.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            {!n.read && <div className="w-2 h-2 bg-indigo-600 rounded-full mt-2 shrink-0"></div>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="h-8 w-px bg-slate-100 mx-2"></div>
             <div className="flex items-center space-x-3 cursor-pointer group">
               <div className="text-right hidden sm:block">

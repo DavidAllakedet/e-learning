@@ -1,25 +1,32 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, GraduationCap } from 'lucide-react';
-import api from '../services/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
+import { useAuth } from '../hooks/useAuth';
+import { ROLES } from '../constants/roles';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const roleRedirect = (role?: string) => {
+    if (role === ROLES.TEACHER) return '/teacher/dashboard';
+    if (role === ROLES.ADMIN || role === ROLES.SUPER_ADMIN) return '/admin/dashboard';
+    return '/student/dashboard';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const { data } = await api.post('/auth/login', { email, password });
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      navigate('/dashboard');
+      await login(email, password);
+      const savedUser = JSON.parse(localStorage.getItem('user') || 'null');
+      navigate(roleRedirect(savedUser?.role));
     } catch (err) { 
       console.error(err);
       alert('Connexion échouée. Veuillez vérifier vos identifiants.'); 
@@ -64,7 +71,11 @@ const Login = () => {
           />
           
           <div className="flex items-center justify-end">
-            <button type="button" className="text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-colors">
+            <button 
+              type="button" 
+              onClick={() => alert('Fonctionnalité de réinitialisation de mot de passe à venir. Veuillez contacter un administrateur.')}
+              className="text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+            >
               Mot de passe oublié ?
             </button>
           </div>

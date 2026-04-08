@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import api from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -10,8 +11,10 @@ import {
   CheckCircle2,
   FileIcon,
   MessageSquare,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from 'lucide-react';
+import { cn } from '../utils/cn';
 
 interface Assignment {
   id: string;
@@ -20,8 +23,15 @@ interface Assignment {
   dueDate: string;
   status: 'pending' | 'submitted' | 'graded';
   courseTitle?: string;
-  grade?: string;
-  feedback?: string;
+  grade?: {
+    value: number;
+    feedback: string;
+  };
+  submission?: {
+    id: string;
+    fileUrl: string;
+    submittedAt: string;
+  };
 }
 
 interface User {
@@ -31,34 +41,65 @@ interface User {
 
 const AssignmentPage = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [user] = useState<User | null>(() => {
     const saved = localStorage.getItem('user');
     return saved ? JSON.parse(saved) : null;
   });
   
-  const [assignment, setAssignment] = useState<Assignment | null>(() => ({
-    id: id || '',
-    title: "Architecture Clean Code en Node.js",
-    description: "Implémentez une API REST suivant les principes de la Clean Architecture. Votre projet doit inclure des couches séparées pour les entités, les cas d'utilisation et les adaptateurs.",
-    dueDate: "2024-04-15",
-    courseTitle: "Node.js Expert",
-    status: 'pending'
-  }));
-
+  const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [loading, setLoading] = useState(true);
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const fetchAssignment = useCallback(async () => {
+    try {
+      const res = await api.get(`/assignments/${id}`);
+      setAssignment(res.data);
+    } catch (error) {
+      console.error('Erreur lors du chargement du devoir', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchAssignment();
+  }, [fetchAssignment]);
 
   const handleSubmit = async () => {
     if (!file || !assignment) return;
     setIsSubmitting(true);
-    // Simulation d'upload
-    setTimeout(() => {
-      setAssignment({ ...assignment, status: 'submitted' });
+    
+    const formData = new FormData();
+    formData.append('assignmentId', assignment.id);
+    formData.append('file', file);
+
+    try {
+      await api.post('/assignments/submit', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      await fetchAssignment();
+    } catch (error) {
+      console.error('Erreur lors de la soumission', error);
+      alert('Erreur lors de l\'envoi du devoir.');
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
-  if (!assignment) return null;
+  if (loading) return (
+    <div className="h-[60vh] flex items-center justify-center">
+      <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+    </div>
+  );
+
+  if (!assignment) return (
+    <div className="h-[60vh] flex flex-col items-center justify-center text-center">
+      <h3 className="text-xl font-black text-slate-900">Devoir introuvable</h3>
+      <Button onClick={() => navigate(-1)} variant="outline" className="mt-4 rounded-xl">Retour</Button>
+    </div>
+  );
 
   const isTeacher = user?.role === 'TEACHER';
 
@@ -69,8 +110,11 @@ const AssignmentPage = () => {
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="rounded-lg">{assignment.courseTitle}</Badge>
-            <Badge variant={assignment.status === 'pending' ? 'warning' : 'success'} className="rounded-lg">
-              {assignment.status === 'pending' ? 'À rendre' : 'Soumis'}
+            <Badge 
+              variant={assignment.status === 'pending' ? 'warning' : assignment.status === 'graded' ? 'success' : 'primary'} 
+              className="rounded-lg"
+            >
+              {assignment.status === 'pending' ? 'À rendre' : assignment.status === 'graded' ? 'Noté' : 'Soumis'}
             </Badge>
           </div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">{assignment.title}</h1>
@@ -79,7 +123,9 @@ const AssignmentPage = () => {
           <Clock className="w-5 h-5 text-amber-500" />
           <div>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Date limite</p>
-            <p className="text-sm font-bold text-slate-700 mt-1">15 Avril 2026, 23:59</p>
+            <p className="text-sm font-bold text-slate-700 mt-1">
+              {new Date(assignment.dueDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
           </div>
         </div>
       </div>
@@ -103,32 +149,70 @@ const AssignmentPage = () => {
                   <ul className="list-disc list-inside space-y-1">
                     <li>Format PDF uniquement</li>
                     <li>Taille maximum : 10 Mo</li>
-                    <li>Un seul essai autorisé</li>
+                    <li>Une seule soumission autorisée</li>
                   </ul>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {assignment.status === 'submitted' && (
-            <Card className="border-emerald-100 bg-emerald-50/30">
+          {assignment.submission && (
+            <Card className={cn(
+              "border-none shadow-xl",
+              assignment.status === 'graded' ? "bg-emerald-50/30" : "bg-indigo-50/30"
+            )}>
               <CardContent className="pt-6">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-4">
+                    <div className={cn(
+                      "w-12 h-12 rounded-2xl flex items-center justify-center",
+                      assignment.status === 'graded' ? "bg-emerald-100 text-emerald-600" : "bg-indigo-100 text-indigo-600"
+                    )}>
+                      <CheckCircle2 className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-slate-900">Travail soumis</h3>
+                      <p className="text-sm font-medium text-slate-500">
+                        Le {new Date(assignment.submission.submittedAt).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-black text-slate-900">Travail bien reçu !</h3>
-                    <p className="text-sm font-medium text-slate-500">Soumis le {new Date().toLocaleDateString()}</p>
-                  </div>
+                  {assignment.status === 'graded' && (
+                    <div className="text-right">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Note</p>
+                      <p className="text-3xl font-black text-emerald-600">{assignment.grade?.value}<span className="text-sm text-slate-400 ml-1">/20</span></p>
+                    </div>
+                  )}
                 </div>
-                <div className="mt-6 p-4 bg-white rounded-xl border border-emerald-100 flex items-center justify-between">
+
+                <div className="p-4 bg-white rounded-xl border border-slate-100 flex items-center justify-between shadow-sm">
                   <div className="flex items-center space-x-3">
                     <FileIcon className="w-5 h-5 text-slate-400" />
-                    <span className="text-sm font-bold text-slate-700">architecture_v1.pdf</span>
+                    <span className="text-sm font-bold text-slate-700 truncate max-w-[200px]">
+                      {assignment.submission.fileUrl.split('/').pop()}
+                    </span>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-indigo-600">Voir le fichier</Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-indigo-600 font-black text-xs uppercase"
+                    onClick={() => window.open(`http://localhost:5000${assignment.submission?.fileUrl}`, '_blank')}
+                  >
+                    Voir le fichier
+                  </Button>
                 </div>
+
+                {assignment.grade?.feedback && (
+                  <div className="mt-6 p-6 bg-white rounded-2xl border border-emerald-100 shadow-sm">
+                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-3 flex items-center">
+                      <MessageSquare className="w-3 h-3 mr-2" />
+                      Feedback de l'enseignant
+                    </p>
+                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic">
+                      "{assignment.grade.feedback}"
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

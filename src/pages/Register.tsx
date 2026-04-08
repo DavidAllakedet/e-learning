@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, GraduationCap, ArrowRight, CheckCircle2 } from 'lucide-react';
-import api from '../services/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
@@ -11,8 +10,7 @@ const Register = () => {
     email: '', 
     password: '', 
     firstName: '', 
-    lastName: '', 
-    role: 'STUDENT' 
+    lastName: '' 
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -21,8 +19,7 @@ const Register = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await api.post('/auth/register', formData);
-      navigate('/login');
+      navigate('/select-role', { state: formData });
     } catch (err) { 
       console.error(err);
       alert('Erreur lors de l\'inscription. Veuillez réessayer.'); 
@@ -86,38 +83,6 @@ const Register = () => {
             required
           />
 
-          <div className="space-y-3">
-            <label className="text-sm font-bold text-slate-700 ml-1">Je suis un...</label>
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => setFormData({...formData, role: 'STUDENT'})}
-                className={cn(
-                  "p-4 rounded-2xl border-2 transition-all duration-200 flex items-center justify-center space-x-2 font-bold",
-                  formData.role === 'STUDENT' 
-                    ? "border-indigo-600 bg-indigo-50 text-indigo-600 shadow-md shadow-indigo-100" 
-                    : "border-slate-100 bg-white text-slate-500 hover:border-slate-200"
-                )}
-              >
-                <GraduationCap className="w-5 h-5" />
-                <span>Étudiant</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormData({...formData, role: 'TEACHER'})}
-                className={cn(
-                  "p-4 rounded-2xl border-2 transition-all duration-200 flex items-center justify-center space-x-2 font-bold",
-                  formData.role === 'TEACHER' 
-                    ? "border-indigo-600 bg-indigo-50 text-indigo-600 shadow-md shadow-indigo-100" 
-                    : "border-slate-100 bg-white text-slate-500 hover:border-slate-200"
-                )}
-              >
-                <User className="w-5 h-5" />
-                <span>Enseignant</span>
-              </button>
-            </div>
-          </div>
-
           <div className="bg-slate-50 p-4 rounded-2xl flex items-start space-x-3">
             <CheckCircle2 className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
             <p className="text-xs text-slate-500 font-medium leading-relaxed">
@@ -149,6 +114,3 @@ const Register = () => {
 };
 
 export default Register;
-
-// Simple cn helper for this file if needed, though we should use src/utils/cn.ts
-import { cn } from '../utils/cn';

@@ -25,16 +25,18 @@ const CourseCatalog = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/courses')
-      .then(res => setCourses(res.data))
-      .catch(err => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
+    const delayDebounceFn = setTimeout(() => {
+      setLoading(true);
+      api.get(`/courses?search=${searchTerm}`)
+        .then(res => setCourses(res.data))
+        .catch(err => console.error(err))
+        .finally(() => setLoading(false));
+    }, 300);
 
-  const filteredCourses = courses.filter(course => 
-    course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    course.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
+  const filteredCourses = courses;
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700">
