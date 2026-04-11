@@ -162,8 +162,8 @@ const CourseView = () => {
                 <div className="w-20 h-20 bg-indigo-600 rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-indigo-500/20">
                   <Star className="w-10 h-10 text-white" />
                 </div>
-                <h2 className="text-4xl font-black text-white tracking-tight mb-4">Prêt à propulser votre carrière ?</h2>
-                <p className="text-slate-300 max-w-lg mb-10 text-lg">Inscrivez-vous dès maintenant pour accéder à l'intégralité du contenu, aux quiz et obtenir votre certificat.</p>
+                <h2 className="text-4xl font-black text-white tracking-tight mb-4">Accéder au cours</h2>
+                <p className="text-slate-300 max-w-lg mb-10 text-lg">Inscrivez-vous pour accéder aux contenus et aux quiz du cours.</p>
                 <Button 
                   onClick={handleEnroll} 
                   isLoading={isEnrolling}
@@ -183,7 +183,7 @@ const CourseView = () => {
                   </div>
                   <div>
                     <p className="text-sm font-black text-slate-900 leading-none">{course.teacher.firstName} {course.teacher.lastName}</p>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Expert Formateur</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Enseignant</p>
                   </div>
                 </div>
                 <p className="text-slate-600 font-medium leading-relaxed text-lg">
@@ -201,7 +201,7 @@ const CourseView = () => {
                   { label: 'Modules de formation complets', icon: PlayCircle },
                   { label: 'Ressources PDF téléchargeables', icon: FileText },
                   { label: 'Évaluations et Quiz', icon: Star },
-                  { label: 'Certificat de complétion', icon: CheckCircle2 }
+                  { label: 'Suivi de progression', icon: CheckCircle2 }
                 ].map((item, i) => (
                   <li key={i} className="flex items-center space-x-3 text-slate-300 font-medium">
                     <item.icon className="w-5 h-5 text-indigo-400" />
@@ -241,7 +241,7 @@ const CourseView = () => {
             {activeContent ? (
               <div className="aspect-video bg-black">
                 <MediaViewer 
-                  url={`http://localhost:5000${activeContent.url}`} 
+                  url={`${import.meta.env.VITE_UPLOADS_URL}${activeContent.url}`} 
                   type={activeContent.type === 'VIDEO' ? 'video' : 'pdf'} 
                 />
               </div>
@@ -263,7 +263,7 @@ const CourseView = () => {
                 {activeContent?.type === 'PDF' && (
                   <Button 
                     variant="outline" 
-                    onClick={() => handleDownload(`http://localhost:5000${activeContent.url}`, activeContent.title + '.pdf')}
+                    onClick={() => handleDownload(`${import.meta.env.VITE_UPLOADS_URL}${activeContent.url}`, activeContent.title + '.pdf')}
                     className="rounded-2xl h-12 px-6 border-2"
                   >
                     <Download className="mr-2 w-5 h-5" />
@@ -300,7 +300,7 @@ const CourseView = () => {
                 </div>
                 <div>
                   <p className="text-sm font-black text-slate-900 leading-none">{course.teacher.firstName} {course.teacher.lastName}</p>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Expert Formateur</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Enseignant</p>
                 </div>
               </div>
               <p className="text-slate-600 font-medium leading-relaxed">
@@ -412,8 +412,8 @@ const CourseView = () => {
           <Card className="p-8 bg-indigo-600 border-none text-white relative overflow-hidden">
             <div className="relative z-10">
               <CheckCircle2 className="w-10 h-10 text-white/20 mb-4" />
-              <h4 className="text-xl font-black leading-tight">Obtenez votre certificat</h4>
-              <p className="text-indigo-100 text-sm font-medium mt-2 opacity-80">Complétez toutes les leçons et réussissez le quiz final.</p>
+              <h4 className="text-xl font-black leading-tight">Quiz du cours</h4>
+              <p className="text-indigo-100 text-sm font-medium mt-2 opacity-80">Évaluez vos acquis en passant les quiz disponibles.</p>
               {course.quizzes && course.quizzes.length > 0 && (
                 <Button 
                   variant="secondary" 

@@ -173,19 +173,6 @@ const Dashboard = () => {
             </Card>
           </div>
 
-          {/* Upgrade Banner - Hidden for now
-          <Card className="bg-slate-900 border-none p-10 text-white relative overflow-hidden shadow-2xl shadow-slate-200">
-            <div className="relative z-10">
-              <Trophy className="w-10 h-10 text-indigo-400 mb-6" />
-              <h3 className="text-2xl font-black leading-tight">Passer au niveau <br />supérieur ?</h3>
-              <p className="text-slate-400 mt-4 text-sm font-medium opacity-90 leading-relaxed">Accédez à tous les cours premium et aux certificats officiels.</p>
-              <Button className="mt-8 w-full bg-white text-slate-900 hover:bg-slate-50 h-12 rounded-2xl font-black uppercase text-xs tracking-widest">
-                Devenir Pro
-              </Button>
-            </div>
-            <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl" />
-          </Card>
-          */}
         </div>
       </div>
     </div>

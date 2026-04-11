@@ -210,9 +210,8 @@ const AssignmentPage = () => {
                     variant="ghost" 
                     size="sm" 
                     className="text-indigo-600 font-black text-xs uppercase"
-                    onClick={() => window.open(`http://localhost:5000${assignment.submission?.fileUrl}`, '_blank')}
-                  >
-                    Voir le fichier
+                    onClick={() => window.open(`${import.meta.env.VITE_UPLOADS_URL}${assignment.submission?.fileUrl}`, '_blank')}
+                   > Voir le fichier
                   </Button>
                 </div>
 

@@ -108,7 +108,7 @@ const MainLayout = () => {
     user?.role === 'TEACHER'
       ? [
           { to: '/teacher/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-          { to: '/teacher/courses', icon: BookOpen, label: 'Mes cours' },
+          { to: '/teacher/courses', icon: BookOpen, label: 'Cours proposés' },
           { to: '/teacher/quizzes', icon: HelpCircle, label: 'Quiz' },
           { to: '/teacher/assignments', icon: FileText, label: 'Devoirs' },
           { to: '/teacher/grading', icon: FileText, label: 'Corrections' },

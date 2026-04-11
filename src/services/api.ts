@@ -1,7 +1,12 @@
 // d:\PROJETS\COURS REACT\e-l\my-react-app\src\services\api.ts
 import axios from 'axios';
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? 'http://localhost:5000/api' : '/api');
+
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: API_BASE_URL,
   timeout: 60000 // 60 second timeout
 });
 
@@ -9,9 +14,6 @@ api.interceptors.request.use(config => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-    console.log('Sending request with token:', token.substring(0, 20) + '...');
-  } else {
-    console.warn('No token found in localStorage');
   }
   return config;
 });

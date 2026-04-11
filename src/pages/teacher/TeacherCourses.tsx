@@ -61,12 +61,12 @@ const TeacherCourses = () => {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Mes cours</h1>
-          <p className="text-slate-500 font-medium">Gérez uniquement les cours dont vous êtes responsable.</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Cours proposés</h1>
+          <p className="text-slate-500 font-medium">Gérez les cours que vous proposez aux étudiants.</p>
         </div>
         <Button className="rounded-2xl h-12 px-6" onClick={() => navigate('/teacher/courses/new')}>
           <Plus className="w-5 h-5 mr-2" />
-          Créer un cours
+          Proposer un cours
         </Button>
       </div>
 
@@ -82,7 +82,6 @@ const TeacherCourses = () => {
                 <THead>Cours</THead>
                 <THead>Étudiants</THead>
                 <THead>Statut</THead>
-                <THead>Prix</THead>
                 <THead className="text-right">Actions</THead>
               </TRow>
             </THeader>
@@ -111,7 +110,6 @@ const TeacherCourses = () => {
                       {c.status === 'PUBLISHED' ? 'Publié' : 'Brouillon'}
                     </Badge>
                   </TCell>
-                  <TCell className="font-bold text-slate-900">{c.price.toLocaleString('fr-FR')}FCFA</TCell>
                   <TCell className="text-right">
                     <div className="flex justify-end space-x-1">
                       <Button

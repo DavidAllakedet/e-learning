@@ -43,7 +43,6 @@ const AdminCourses = () => {
                 <THead>Cours</THead>
                 <THead>Enseignant</THead>
                 <THead>Étudiants</THead>
-                <THead>Prix</THead>
                 <THead className="text-right">Actions</THead>
               </TRow>
             </THeader>
@@ -68,7 +67,6 @@ const AdminCourses = () => {
                       {c._count?.enrollments || 0}
                     </Badge>
                   </TCell>
-                  <TCell className="font-bold text-slate-900">{c.price.toLocaleString('fr-FR')}FCFA</TCell>
                   <TCell className="text-right">
                     <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-indigo-50 hover:text-indigo-600" onClick={() => navigate(`/courses/${c.id}`)}>
                       <Eye className="w-4 h-4" />
@@ -85,4 +83,3 @@ const AdminCourses = () => {
 };
 
 export default AdminCourses;
-

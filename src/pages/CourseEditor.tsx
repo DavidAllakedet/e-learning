@@ -137,7 +137,7 @@ const CourseEditor = () => {
   const handleCreateModule = async () => {
     if (!newModuleTitle.trim() || !id) return;
     try {
-      await api.post(`/courses/${id}/modules`, { title: newModuleTitle });
+      await api.post('/courses/module', { title: newModuleTitle, courseId: id });
       setNewModuleTitle('');
       setIsAddingModule(false);
       await fetchCourseDetails();
@@ -153,10 +153,9 @@ const CourseEditor = () => {
       const formData = new FormData();
       formData.append('title', contentTitle);
       formData.append('type', contentType);
+      formData.append('moduleId', activeModule);
       formData.append('file', selectedFile);
-      await api.post(`/courses/${id}/modules/${activeModule}/contents`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await api.post('/courses/content', formData);
       setContentTitle('');
       setSelectedFile(null);
       await fetchCourseDetails();
@@ -167,10 +166,10 @@ const CourseEditor = () => {
     }
   };
 
-  const handleDeleteContent = async (contentId: string, moduleId: string) => {
+  const handleDeleteContent = async (contentId: string) => {
     if (!id) return;
     try {
-      await api.delete(`/courses/${id}/modules/${moduleId}/contents/${contentId}`);
+      await api.delete(`/courses/content/${contentId}`);
       await fetchCourseDetails();
     } catch (error) {
       console.error(error);
@@ -241,7 +240,7 @@ const CourseEditor = () => {
             Retour
           </Button>
         </div>
-        <h1 className="text-3xl font-black text-slate-900">Créer un nouveau cours</h1>
+        <h1 className="text-3xl font-black text-slate-900">Proposer un nouveau cours</h1>
         <Card className="p-8">
           <div className="space-y-6">
             <Input label="Titre du cours" value={createTitle} onChange={(e) => setCreateTitle(e.target.value)} placeholder="Ex: Apprendre Python" />
@@ -252,7 +251,7 @@ const CourseEditor = () => {
             <div className="flex items-end col-span-2">
               <Button onClick={handleCreateCourse} isLoading={isCreating} disabled={!createTitle.trim()} className="w-full rounded-2xl h-12">
                 <Plus className="mr-2 w-4 h-4" />
-                Créer
+                Proposer
               </Button>
             </div>
           </div>
@@ -353,7 +352,7 @@ const CourseEditor = () => {
                   </button>
                 </div>
                 <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center">
-                  <input type="file" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} className="hidden" id="file-upload" />
+                  <input type="file" accept=".mp4,.mov,.webm,.m4v,.pdf" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} className="hidden" id="file-upload" />
                   <label htmlFor="file-upload" className="cursor-pointer">
                     <p className="text-slate-500 font-medium mb-2">{selectedFile ? selectedFile.name : "Glissez votre fichier ici ou cliquez pour sélectionner"}</p>
                     <p className="text-xs text-slate-400">MP4, MOV, WEBM, PDF (max 100MB)</p>
@@ -382,7 +381,7 @@ const CourseEditor = () => {
                         <p className="text-xs text-slate-400 uppercase">{content.type}</p>
                       </div>
                     </div>
-                    <Button variant="ghost" onClick={() => handleDeleteContent(content.id, activeModule!)} className="text-rose-400">
+                    <Button variant="ghost" onClick={() => handleDeleteContent(content.id)} className="text-rose-400">
                       <Trash2 className="w-5 h-5" />
                     </Button>
                   </div>

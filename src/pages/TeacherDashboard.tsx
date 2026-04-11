@@ -99,7 +99,7 @@ const TeacherDashboard = () => {
         </div>
         <Button className="rounded-2xl h-12 px-6" onClick={() => navigate('/teacher/courses/new')}>
           <Plus className="mr-2 w-5 h-5" />
-          Créer un nouveau cours
+          Proposer un cours
         </Button>
       </div>
 
@@ -223,18 +223,6 @@ const TeacherDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Quick Tips - Hidden for now
-          <div className="bg-slate-900 rounded-3xl p-8 text-white">
-            <div className="w-12 h-12 bg-indigo-500 rounded-2xl flex items-center justify-center mb-6">
-              <TrendingUp className="w-6 h-6" />
-            </div>
-            <h3 className="text-xl font-black">Boostez votre audience</h3>
-            <p className="text-slate-400 mt-2 text-sm font-medium">Partagez vos cours sur les réseaux sociaux pour attirer plus d'étudiants.</p>
-            <Button className="mt-6 w-full bg-white text-slate-900 hover:bg-slate-100">
-              Générer un lien
-            </Button>
-          </div>
-          */}
         </div>
       </div>
     </div>

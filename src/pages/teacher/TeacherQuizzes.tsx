@@ -37,7 +37,7 @@ const TeacherQuizzes = () => {
           <p className="text-slate-500 font-medium">Gérez les quiz de vos cours uniquement.</p>
         </div>
         <Button className="rounded-2xl h-12 px-6" onClick={() => navigate('/teacher/courses/new')}>
-          Créer un cours
+          Proposer un cours
           <ArrowRight className="ml-2 w-4 h-4" />
         </Button>
         <Button className="rounded-2xl h-12 px-6" onClick={() => navigate('/teacher/quizzes/new')}>

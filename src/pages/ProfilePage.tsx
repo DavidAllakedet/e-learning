@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { User as UserIcon, Mail, Shield, Camera, Bell, Lock, Globe, CreditCard, ChevronRight, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { User as UserIcon, Mail, Shield, Camera, Bell, Lock, Globe, CreditCard, ChevronRight, CheckCircle2, AlertCircle, Loader2, BookOpen, Eye, Star, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -32,8 +33,18 @@ type Notification = {
   createdAt: string;
 };
 
+type TeacherCourseRow = {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  status: 'DRAFT' | 'PUBLISHED';
+  _count?: { enrollments: number; modules?: number };
+};
+
 const ProfilePage = () => {
   const { user, updateUser } = useAuth();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,6 +62,8 @@ const ProfilePage = () => {
   const [newPassword, setNewPassword] = useState('');
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notifLoading, setNotifLoading] = useState(false);
+  const [teacherCourses, setTeacherCourses] = useState<TeacherCourseRow[]>([]);
+  const [teacherCoursesLoading, setTeacherCoursesLoading] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -74,6 +87,15 @@ const ProfilePage = () => {
     fetchProfile();
   }, []);
 
+  useEffect(() => {
+    if (!user || user.role !== 'TEACHER') return;
+    setTeacherCoursesLoading(true);
+    api.get('/courses/teacher/my')
+      .then(res => setTeacherCourses(res.data))
+      .catch(err => console.error(err))
+      .finally(() => setTeacherCoursesLoading(false));
+  }, [user]);
+
   if (!user) return null;
   if (loading || !profile) {
     return (
@@ -85,6 +107,7 @@ const ProfilePage = () => {
 
   const tabs = [
     { id: 'profile', label: 'Profil Public', icon: UserIcon },
+    ...(user.role === 'TEACHER' ? [{ id: 'courses', label: 'Cours proposés', icon: BookOpen }] : []),
     { id: 'security', label: 'Sécurité', icon: Lock },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'billing', label: 'Facturation', icon: CreditCard },
@@ -196,8 +219,7 @@ const ProfilePage = () => {
             <div className="w-32 h-32 rounded-5xl bg-white p-1.5 shadow-2xl shadow-indigo-200">
               {profile.avatar ? (
                 <img
-                  src={`http://localhost:5000${profile.avatar}`}
-                  alt="Avatar"
+                  src={`${import.meta.env.VITE_UPLOADS_URL}${profile.avatar}`}
                   className="w-full h-full rounded-4xl object-cover"
                 />
               ) : (
@@ -482,6 +504,109 @@ const ProfilePage = () => {
                 )}
               </CardContent>
             </Card>
+          )}
+
+          {activeTab === 'courses' && user.role === 'TEACHER' && (
+            <div className="space-y-8">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-900">Cours proposés</h2>
+                  <p className="text-slate-500 font-medium">Aperçu de vos cours et accès rapide à l’éditeur.</p>
+                </div>
+                <Button className="rounded-2xl h-12 px-6" onClick={() => navigate('/teacher/courses/new')}>
+                  Proposer un cours
+                </Button>
+              </div>
+
+              {teacherCoursesLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-105 bg-slate-100 rounded-4xl animate-pulse" />
+                  ))}
+                </div>
+              ) : teacherCourses.length === 0 ? (
+                <Card className="p-10 border-none shadow-xl shadow-slate-200/40 text-center">
+                  <p className="text-slate-500 font-medium">Vous n’avez pas encore proposé de cours.</p>
+                  <Button className="mt-6 rounded-2xl h-12 px-8" onClick={() => navigate('/teacher/courses/new')}>
+                    Proposer un cours
+                  </Button>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {teacherCourses.map((course) => (
+                    <Card
+                      key={course.id}
+                      className="p-0 group border-none shadow-lg shadow-slate-200/50 hover:shadow-2xl hover:shadow-indigo-100 transition-all duration-300 rounded-4xl overflow-hidden flex flex-col"
+                    >
+                      <div className="relative h-52 bg-slate-100 overflow-hidden">
+                        <div className="absolute inset-0 bg-linear-to-t from-slate-900/60 to-transparent" />
+                        <div className="absolute bottom-5 left-5 right-5 flex justify-between items-center">
+                          <Badge
+                            variant="primary"
+                            className="bg-white/20 backdrop-blur-md text-white border-white/20 rounded-lg px-3 py-1 font-bold text-[10px] uppercase"
+                          >
+                            DÉVELOPPEMENT
+                          </Badge>
+                          <div className="flex items-center space-x-1 bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20">
+                            <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                            <span className="text-white text-[10px] font-black">4.9</span>
+                          </div>
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-indigo-600/10 backdrop-blur-[2px]">
+                          <Button 
+                            className="rounded-full w-14 h-14 p-0 bg-white shadow-xl hover:scale-110 transition-transform"
+                            onClick={() => navigate(`/teacher/courses/${course.id}/edit`)}
+                          >
+                            <BookOpen className="w-6 h-6 text-indigo-600" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <CardContent className="p-8 flex-1 flex flex-col">
+                        <div className="flex items-center space-x-2 mb-3">
+                          <div className="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">
+                            <UserIcon className="w-3 h-3 text-slate-400" />
+                          </div>
+                          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                            {user.firstName} {user.lastName}
+                          </span>
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-tight">
+                          {course.title}
+                        </h3>
+                        <p className="mt-3 text-slate-500 text-sm font-medium line-clamp-2 leading-relaxed">
+                          {course.description}
+                        </p>
+
+                        <div className="mt-6 pt-6 border-t border-slate-50 flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="flex items-center space-x-1.5 text-slate-400">
+                              <Clock className="w-4 h-4" />
+                              <span className="text-xs font-bold">—</span>
+                            </div>
+                            <div className="flex items-center space-x-1.5 text-slate-400">
+                              <BookOpen className="w-4 h-4" />
+                              <span className="text-xs font-bold">{course._count?.modules || 0} modules</span>
+                            </div>
+                          </div>
+                          <Badge variant={course.status === 'PUBLISHED' ? 'success' : 'warning'} className="rounded-lg">
+                            {course.status === 'PUBLISHED' ? 'Publié' : 'Brouillon'}
+                          </Badge>
+                        </div>
+
+                        <Button 
+                          className="mt-8 w-full rounded-2xl h-14 text-sm font-black uppercase tracking-widest shadow-lg shadow-indigo-100 group-hover:shadow-indigo-200 transition-all"
+                          onClick={() => navigate(`/teacher/courses/${course.id}/edit`)}
+                        >
+                          Voir le cours
+                          <Eye className="ml-2 w-4 h-4" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

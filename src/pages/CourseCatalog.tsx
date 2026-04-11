@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, BookOpen, Star, Clock, User } from 'lucide-react';
 import api from '../services/api';
@@ -18,25 +18,58 @@ interface Course {
   duration?: string;
 }
 
+type CoursesResponse =
+  | Course[]
+  | {
+      items: Course[];
+      meta: { page: number; limit: number; total: number; totalPages: number };
+    };
+
 const CourseCatalog = () => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 9;
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       setLoading(true);
-      api.get(`/courses?search=${searchTerm}`)
-        .then(res => setCourses(res.data))
+      api.get<CoursesResponse>('/courses', { params: { search: searchTerm, page, limit } })
+        .then(res => {
+          const data = res.data;
+          if (Array.isArray(data)) {
+            setCourses(data);
+            setTotal(data.length);
+            setTotalPages(1);
+            return;
+          }
+
+          setCourses(data.items);
+          setTotal(data.meta.total);
+          setTotalPages(data.meta.totalPages);
+        })
         .catch(err => console.error(err))
         .finally(() => setLoading(false));
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm]);
+  }, [searchTerm, page]);
 
   const filteredCourses = courses;
+  const canPrev = page > 1;
+  const canNext = page < totalPages;
+  const pagesToShow = useMemo(() => {
+    const current = page;
+    const start = Math.max(1, current - 2);
+    const end = Math.min(totalPages, current + 2);
+    const pages: number[] = [];
+    for (let p = start; p <= end; p += 1) pages.push(p);
+    return pages;
+  }, [page, totalPages]);
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700">
@@ -44,14 +77,14 @@ const CourseCatalog = () => {
       <div className="relative bg-slate-900 rounded-5xl p-12 overflow-hidden shadow-2xl shadow-slate-200">
         <div className="relative z-10 max-w-2xl">
           <Badge variant="primary" className="mb-6 bg-indigo-500/20 text-indigo-300 border-indigo-500/20 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">
-            Catalogue Premium
+            Catalogue
           </Badge>
           <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-            Découvrez nos cours <br />
-            <span className="text-indigo-400">Haute Performance</span>
+            Découvrez les cours <br />
+            disponibles sur la plateforme
           </h1>
           <p className="mt-6 text-slate-400 text-lg font-medium leading-relaxed">
-            Explorez notre sélection de formations conçues par des experts pour propulser votre carrière.
+            Recherchez un cours, consultez le contenu et suivez votre progression.
           </p>
           
           <div className="mt-10 relative max-w-lg group">
@@ -63,7 +96,10 @@ const CourseCatalog = () => {
               placeholder="Rechercher un cours (React, Node, UI Design...)"
               className="pl-14 h-16 bg-white/10 border-white/10 text-white placeholder:text-slate-500 rounded-2xl focus:bg-white focus:text-slate-900 transition-all text-lg border-2"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1);
+              }}
             />
           </div>
         </div>
@@ -79,7 +115,7 @@ const CourseCatalog = () => {
           <div>
             <h2 className="text-2xl font-black text-slate-900">Tous les cours</h2>
             <p className="text-slate-500 font-bold text-sm uppercase tracking-wider mt-1">
-              {filteredCourses.length} cours trouvés
+              {total} cours trouvés
             </p>
           </div>
           <Button variant="outline" className="rounded-xl border-2 font-black text-slate-700 h-12">
@@ -93,6 +129,10 @@ const CourseCatalog = () => {
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="h-105 bg-slate-100 rounded-4xl animate-pulse" />
             ))}
+          </div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="py-20 text-center bg-white rounded-4xl border border-slate-100 shadow-sm">
+            <p className="text-slate-500 font-medium">Aucun cours trouvé.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -164,6 +204,59 @@ const CourseCatalog = () => {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <Button
+              variant="outline"
+              className="rounded-xl border-2"
+              disabled={!canPrev}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Précédent
+            </Button>
+
+            <div className="flex items-center gap-2">
+              {pagesToShow[0] !== 1 && (
+                <>
+                  <Button variant="outline" className="rounded-xl border-2 w-12" onClick={() => setPage(1)}>
+                    1
+                  </Button>
+                  <span className="text-slate-400 font-black">…</span>
+                </>
+              )}
+
+              {pagesToShow.map((p) => (
+                <Button
+                  key={p}
+                  variant={p === page ? 'primary' : 'outline'}
+                  className={p === page ? "rounded-xl w-12" : "rounded-xl border-2 w-12"}
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </Button>
+              ))}
+
+              {pagesToShow[pagesToShow.length - 1] !== totalPages && (
+                <>
+                  <span className="text-slate-400 font-black">…</span>
+                  <Button variant="outline" className="rounded-xl border-2 w-12" onClick={() => setPage(totalPages)}>
+                    {totalPages}
+                  </Button>
+                </>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              className="rounded-xl border-2"
+              disabled={!canNext}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Suivant
+            </Button>
           </div>
         )}
       </div>

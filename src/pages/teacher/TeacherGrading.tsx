@@ -78,7 +78,7 @@ const TeacherGrading = () => {
                   <FileText className="w-5 h-5 text-slate-400" />
                   <span className="text-sm font-bold text-slate-700 truncate max-w-[280px]">{selected.fileUrl.split('/').pop()}</span>
                 </div>
-                <Button variant="outline" className="rounded-xl border-2" onClick={() => window.open(`http://localhost:5000${selected.fileUrl}`, '_blank')}>
+                <Button variant="outline" className="rounded-xl border-2" onClick={() => window.open(`${import.meta.env.VITE_UPLOADS_URL}${selected.fileUrl}`, '_blank')}>
                   Voir le fichier
                 </Button>
               </div>

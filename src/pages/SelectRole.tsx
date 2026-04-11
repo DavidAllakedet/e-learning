@@ -124,7 +124,7 @@ const SelectRole = () => {
               </div>
               <p className="font-black text-slate-900">Enseignant</p>
             </div>
-            <p className="text-sm text-slate-500 font-medium leading-relaxed">Créez des cours, ajoutez des contenus, évaluez et suivez la classe.</p>
+            <p className="text-sm text-slate-500 font-medium leading-relaxed">Proposez des cours, ajoutez des contenus, évaluez et suivez la classe.</p>
           </button>
         </div>
 
