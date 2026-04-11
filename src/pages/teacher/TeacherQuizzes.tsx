@@ -40,6 +40,10 @@ const TeacherQuizzes = () => {
           Créer un cours
           <ArrowRight className="ml-2 w-4 h-4" />
         </Button>
+        <Button className="rounded-2xl h-12 px-6" onClick={() => navigate('/teacher/quizzes/new')}>
+          Créer un quiz
+          <HelpCircle className="ml-2 w-4 h-4" />
+        </Button>
       </div>
 
       <Card className="p-0 overflow-hidden border-none shadow-2xl shadow-slate-200/40">

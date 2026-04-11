@@ -4,6 +4,7 @@ import api from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
 import { FileUpload } from '../components/ui/FileUpload';
 import { 
   Clock, 
@@ -12,7 +13,10 @@ import {
   FileIcon,
   MessageSquare,
   ArrowRight,
-  Loader2
+  Loader2,
+  Video,
+  Link,
+  Upload
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 
@@ -50,6 +54,8 @@ const AssignmentPage = () => {
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [loading, setLoading] = useState(true);
   const [file, setFile] = useState<File | null>(null);
+  const [link, setLink] = useState('');
+  const [submissionType, setSubmissionType] = useState<'file' | 'video' | 'link'>('file');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchAssignment = useCallback(async () => {
@@ -68,18 +74,26 @@ const AssignmentPage = () => {
   }, [fetchAssignment]);
 
   const handleSubmit = async () => {
-    if (!file || !assignment) return;
+    if (!assignment) return;
     setIsSubmitting(true);
     
     const formData = new FormData();
     formData.append('assignmentId', assignment.id);
-    formData.append('file', file);
+    formData.append('type', submissionType);
+    
+    if (submissionType === 'link') {
+      formData.append('link', link);
+    } else if (file) {
+      formData.append('file', file);
+    }
 
     try {
       await api.post('/assignments/submit', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       await fetchAssignment();
+      setFile(null);
+      setLink('');
     } catch (error) {
       console.error('Erreur lors de la soumission', error);
       alert('Erreur lors de l\'envoi du devoir.');
@@ -226,18 +240,38 @@ const AssignmentPage = () => {
                 <CardTitle className="text-lg">Votre Soumission</CardTitle>
               </CardHeader>
               <CardContent className="p-0 space-y-6">
-                <FileUpload 
-                  onFileSelect={(file) => setFile(file)}
-                  accept=".pdf"
-                  label=""
-                  helperText="Format PDF uniquement (max 10MB)"
-                />
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setSubmissionType('file')} className={cn("flex-1 flex items-center justify-center py-2 rounded-xl font-bold", submissionType === 'file' ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600")}>
+                    <FileIcon className="w-4 h-4 mr-2" /> PDF
+                  </button>
+                  <button type="button" onClick={() => setSubmissionType('video')} className={cn("flex-1 flex items-center justify-center py-2 rounded-xl font-bold", submissionType === 'video' ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600")}>
+                    <Video className="w-4 h-4 mr-2" /> Video
+                  </button>
+                  <button type="button" onClick={() => setSubmissionType('link')} className={cn("flex-1 flex items-center justify-center py-2 rounded-xl font-bold", submissionType === 'link' ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600")}>
+                    <Link className="w-4 h-4 mr-2" /> Lien
+                  </button>
+                </div>
+                
+                {submissionType === 'link' && (
+                  <Input placeholder="https://..." value={link} onChange={(e) => setLink(e.target.value)} />
+                )}
+                
+                {(submissionType === 'file' || submissionType === 'video') && (
+                  <FileUpload 
+                    onFileSelect={(file) => setFile(file)}
+                    accept={submissionType === 'file' ? ".pdf" : ".mp4,.mov,.webm"}
+                    label=""
+                    helperText={submissionType === 'file' ? "PDF (max 10MB)" : "Vidéo (max 100MB)"}
+                  />
+                )}
+                
                 <Button 
                   className="w-full rounded-2xl h-12" 
-                  disabled={!file} 
+                  disabled={submissionType === 'link' ? !link : (!file && (submissionType === 'file' || submissionType === 'video'))}
                   isLoading={isSubmitting}
                   onClick={handleSubmit}
                 >
+                  <Upload className="w-4 h-4 mr-2" />
                   Envoyer le devoir
                 </Button>
               </CardContent>

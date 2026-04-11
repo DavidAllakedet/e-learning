@@ -151,7 +151,7 @@ const CourseCatalog = () => {
                       </div>
                     </div>
                     <div className="text-xl font-black text-indigo-600">
-                      {course.price === 0 ? 'Gratuit' : `${course.price}€`}
+                      {course.price === 0 ? 'Gratuit' : `${course.price.toLocaleString('fr-FR')} FCFA`}
                     </div>
                   </div>
 

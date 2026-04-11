@@ -34,21 +34,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(next);
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { data } = await api.post('/auth/login', { email, password });
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      setUser(data.user);
-    } catch (e: unknown) {
-      setError(getErrorMessage(e) || 'Connexion échouée');
-      throw e;
-    } finally {
-      setLoading(false);
+const login = useCallback(async (email: string, password: string) => {
+  setLoading(true);
+  setError(null);
+  try {
+    console.log('Attempting login with email:', email);
+    const { data } = await api.post('/auth/login', { email, password });
+    // Validate response data
+    if (!data || !data.token || !data.user) {
+      throw new Error('Invalid response from server');
     }
-  }, []);
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    setUser(data.user);
+  } catch (e: unknown) {
+    setError(getErrorMessage(e) || 'Connexion échouée');
+    throw e;
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   const register = useCallback(async (payload: RegisterPayload) => {
     setLoading(true);

@@ -111,7 +111,7 @@ const TeacherCourses = () => {
                       {c.status === 'PUBLISHED' ? 'Publié' : 'Brouillon'}
                     </Badge>
                   </TCell>
-                  <TCell className="font-bold text-slate-900">{c.price} €</TCell>
+                  <TCell className="font-bold text-slate-900">{c.price.toLocaleString('fr-FR')}FCFA</TCell>
                   <TCell className="text-right">
                     <div className="flex justify-end space-x-1">
                       <Button

@@ -7,8 +7,6 @@ import { Button } from '../components/ui/Button';
 import { 
   BookOpen, 
   CheckCircle2, 
-  Clock, 
-  Trophy, 
   ArrowRight,
   PlayCircle
 } from 'lucide-react';
@@ -46,10 +44,10 @@ const Dashboard = () => {
   }, []);
 
   const stats = [
-    { label: 'Cours en cours', value: enrolledCourses.filter(c => c.progress < 100).length.toString(), icon: BookOpen, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { label: 'Cours terminés', value: enrolledCourses.filter(c => c.progress === 100).length.toString(), icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Heures apprises', value: '12h', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
-    { label: 'Points acquis', value: (enrolledCourses.length * 50).toString(), icon: Trophy, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Cours en cours', value: enrolledCourses.filter(c => c.progress < 100).length.toString(), icon: BookOpen, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/student/courses' },
+    { label: 'Cours terminés', value: enrolledCourses.filter(c => c.progress === 100).length.toString(), icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50', link: '/student/courses' },
+    // { label: 'Heures apprises', value: '12h', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
+    // { label: 'Points acquis', value: (enrolledCourses.length * 50).toString(), icon: Trophy, color: 'text-purple-600', bg: 'bg-purple-50' },
   ];
 
   return (
@@ -67,9 +65,9 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
         {stats.map((stat, i) => (
-          <Card key={i} className="group hover:scale-[1.02] transition-transform cursor-default border-none shadow-xl shadow-slate-200/40">
+          <Card key={i} className="group hover:scale-[1.02] transition-transform cursor-pointer border-none shadow-xl shadow-slate-200/40" onClick={() => stat.link && navigate(stat.link)}>
             <div className="flex items-center space-x-4">
               <div className={cn('p-4 rounded-2xl transition-colors', stat.bg, stat.color)}>
                 <stat.icon className="w-6 h-6" />
@@ -175,7 +173,7 @@ const Dashboard = () => {
             </Card>
           </div>
 
-          {/* Upgrade Banner */}
+          {/* Upgrade Banner - Hidden for now
           <Card className="bg-slate-900 border-none p-10 text-white relative overflow-hidden shadow-2xl shadow-slate-200">
             <div className="relative z-10">
               <Trophy className="w-10 h-10 text-indigo-400 mb-6" />
@@ -187,6 +185,7 @@ const Dashboard = () => {
             </div>
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl" />
           </Card>
+          */}
         </div>
       </div>
     </div>

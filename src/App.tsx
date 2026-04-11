@@ -22,8 +22,10 @@ import StudentQuizzes from './pages/student/StudentQuizzes';
 import TeacherGrading from './pages/teacher/TeacherGrading';
 import TeacherStats from './pages/teacher/TeacherStats';
 import TeacherQuizzes from './pages/teacher/TeacherQuizzes';
-import TeacherCourses from './pages/teacher/TeacherCourses';
 import TeacherQuizEditor from './pages/teacher/TeacherQuizEditor';
+import TeacherAssignments from './pages/teacher/TeacherAssignments';
+import TeacherAssignmentEditor from './pages/teacher/TeacherAssignmentEditor';
+import TeacherCourses from './pages/teacher/TeacherCourses';
 import TeacherCourseEnrollments from './pages/teacher/TeacherCourseEnrollments';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCourses from './pages/admin/AdminCourses';
@@ -71,14 +73,18 @@ function App() {
                 <Route path="student/profile" element={<ProfilePage />} />
               </Route>
 
-              <Route element={<RoleBasedRoute allowedRoles={[ROLES.TEACHER, ROLES.SUPER_ADMIN]} />}>
+              <Route element={<RoleBasedRoute allowedRoles={[ROLES.TEACHER, ROLES.ADMIN, ROLES.SUPER_ADMIN]} />}>
                 <Route path="teacher/dashboard" element={<TeacherDashboard />} />
                 <Route path="teacher/courses" element={<TeacherCourses />} />
                 <Route path="teacher/courses/new" element={<CourseEditor />} />
                 <Route path="teacher/courses/:id/edit" element={<CourseEditor />} />
                 <Route path="teacher/courses/:id/enrollments" element={<TeacherCourseEnrollments />} />
                 <Route path="teacher/quizzes" element={<TeacherQuizzes />} />
+                <Route path="teacher/quizzes/new" element={<TeacherQuizEditor />} />
                 <Route path="teacher/quizzes/:id/edit" element={<TeacherQuizEditor />} />
+                <Route path="teacher/assignments" element={<TeacherAssignments />} />
+                <Route path="teacher/assignments/new" element={<TeacherAssignmentEditor />} />
+                <Route path="teacher/assignments/:id/edit" element={<TeacherAssignmentEditor />} />
                 <Route path="teacher/grading" element={<TeacherGrading />} />
                 <Route path="teacher/stats" element={<TeacherStats />} />
                 <Route path="teacher/profile" element={<ProfilePage />} />

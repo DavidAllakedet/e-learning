@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, BookOpen, GraduationCap, FileText, ShieldCheck } from 'lucide-react';
 import api from '../../services/api';
 import { Card } from '../../components/ui/Card';
@@ -13,6 +14,7 @@ type Stats = {
 };
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
@@ -20,10 +22,10 @@ const AdminDashboard = () => {
   }, []);
 
   const cards = [
-    { label: 'Utilisateurs', value: stats?.users ?? 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Cours', value: stats?.courses ?? 0, icon: BookOpen, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { label: 'Inscriptions', value: stats?.enrollments ?? 0, icon: GraduationCap, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Devoirs', value: stats?.assignments ?? 0, icon: FileText, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Utilisateurs', value: stats?.users ?? 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', link: '/admin/users' },
+    { label: 'Total des cours', value: stats?.courses ?? 0, icon: BookOpen, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/admin/courses' },
+    { label: 'Inscriptions', value: stats?.enrollments ?? 0, icon: GraduationCap, color: 'text-emerald-600', bg: 'bg-emerald-50', link: '/admin/enrollments' },
+    { label: 'Devoirs', value: stats?.assignments ?? 0, icon: FileText, color: 'text-amber-600', bg: 'bg-amber-50', link: '/admin/reports' },
   ];
 
   return (
@@ -41,7 +43,7 @@ const AdminDashboard = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {cards.map((c, i) => (
-          <Card key={i} className="hover:shadow-md transition-shadow">
+          <Card key={i} className="hover:shadow-md transition-shadow cursor-pointer hover:scale-[1.02]" onClick={() => navigate(c.link)}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">{c.label}</p>

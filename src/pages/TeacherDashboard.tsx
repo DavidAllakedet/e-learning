@@ -9,7 +9,6 @@ import {
   Users, 
   BookOpen, 
   FileText, 
-  TrendingUp, 
   Plus,
   Edit,
   Trash2,
@@ -46,7 +45,7 @@ const TeacherDashboard = () => {
     totalStudents: 0,
     activeCourses: 0,
     submissionsPending: 0,
-    revenue: '0 €'
+    revenue: '0FCFA'
   });
 
   useEffect(() => {
@@ -61,10 +60,10 @@ const TeacherDashboard = () => {
         setSubmissions(submissionsRes.data);
         
         setStats({
-          totalStudents: coursesRes.data.length * 15,
+          totalStudents: coursesRes.data.reduce((acc: number, c: CourseListItem) => acc + (c._count?.enrollments || 0), 0),
           activeCourses: coursesRes.data.length,
           submissionsPending: submissionsRes.data.filter((s: SubmissionListItem) => !s.grade).length,
-          revenue: `${coursesRes.data.reduce((acc: number, c: CourseListItem) => acc + (c.price * 10), 0)} €`
+          revenue: '0FCFA'
         });
       } catch (error) {
         console.error('Erreur fetch dashboard', error);
@@ -76,10 +75,9 @@ const TeacherDashboard = () => {
   }, []);
 
   const statCards = [
-    { label: 'Étudiants Totaux', value: stats.totalStudents, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Cours Actifs', value: stats.activeCourses, icon: BookOpen, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { label: 'Devoirs à Corriger', value: stats.submissionsPending, icon: FileText, color: 'text-amber-600', bg: 'bg-amber-50' },
-    { label: 'Revenus du mois', value: stats.revenue, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Étudiants Totaux', value: stats.totalStudents, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', link: '/teacher/courses' },
+    { label: 'Cours Actifs', value: stats.activeCourses, icon: BookOpen, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/teacher/courses' },
+    { label: 'Devoirs à Corriger', value: stats.submissionsPending, icon: FileText, color: 'text-amber-600', bg: 'bg-amber-50', link: '/teacher/grading' },
   ];
 
   if (loading) {
@@ -106,9 +104,9 @@ const TeacherDashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {statCards.map((stat, i) => (
-          <Card key={i} className="hover:shadow-md transition-shadow">
+          <Card key={i} className="hover:shadow-md transition-shadow cursor-pointer hover:scale-[1.02]" onClick={() => stat.link && navigate(stat.link)}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
@@ -138,7 +136,7 @@ const TeacherDashboard = () => {
                     <THead>Cours</THead>
                     <THead>Étudiants</THead>
                     <THead>Statut</THead>
-                    <THead>Prix</THead>
+                    {/* <THead>Prix</THead> */}
                     <THead className="text-right">Actions</THead>
                   </TRow>
                 </THeader>
@@ -157,7 +155,7 @@ const TeacherDashboard = () => {
                       <TCell>
                         <Badge variant="success" className="rounded-lg">Publié</Badge>
                       </TCell>
-                      <TCell className="font-bold text-slate-900">{course.price} €</TCell>
+                      {/* <TCell className="font-bold text-slate-900">{course.price.toLocaleString('fr-FR')}FCFA</TCell> */}
                       <TCell className="text-right">
                         <div className="flex justify-end space-x-1">
                           <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-indigo-50 hover:text-indigo-600" onClick={() => navigate(`/courses/${course.id}`)}>
@@ -225,7 +223,7 @@ const TeacherDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Quick Tips */}
+          {/* Quick Tips - Hidden for now
           <div className="bg-slate-900 rounded-3xl p-8 text-white">
             <div className="w-12 h-12 bg-indigo-500 rounded-2xl flex items-center justify-center mb-6">
               <TrendingUp className="w-6 h-6" />
@@ -236,6 +234,7 @@ const TeacherDashboard = () => {
               Générer un lien
             </Button>
           </div>
+          */}
         </div>
       </div>
     </div>

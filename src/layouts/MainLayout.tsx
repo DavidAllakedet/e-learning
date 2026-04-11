@@ -109,8 +109,8 @@ const MainLayout = () => {
       ? [
           { to: '/teacher/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
           { to: '/teacher/courses', icon: BookOpen, label: 'Mes cours' },
-          { to: '/teacher/courses/new', icon: GraduationCap, label: 'Créer un cours' },
           { to: '/teacher/quizzes', icon: HelpCircle, label: 'Quiz' },
+          { to: '/teacher/assignments', icon: FileText, label: 'Devoirs' },
           { to: '/teacher/grading', icon: FileText, label: 'Corrections' },
           { to: '/teacher/stats', icon: TrendingUp, label: 'Statistiques' },
           { to: '/catalog', icon: GraduationCap, label: 'Catalogue' },
@@ -120,7 +120,7 @@ const MainLayout = () => {
         ? [
             { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
             { to: '/admin/users', icon: UserIcon, label: 'Utilisateurs' },
-            { to: '/admin/courses', icon: BookOpen, label: 'Cours' },
+            { to: '/admin/courses', icon: BookOpen, label: 'Tous les cours' },
             { to: '/admin/enrollments', icon: ShieldCheck, label: 'Inscriptions' },
             { to: '/admin/reports', icon: TrendingUp, label: 'Rapports' },
             { to: '/admin/settings', icon: Settings, label: 'Paramètres' },

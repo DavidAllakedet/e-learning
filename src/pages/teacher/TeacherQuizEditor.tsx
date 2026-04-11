@@ -37,9 +37,23 @@ const TeacherQuizEditor = () => {
   const [title, setTitle] = useState('');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [saving, setSaving] = useState(false);
+  const [courses, setCourses] = useState<{id: string, title: string}[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState('');
+  const isNew = !id;
 
   useEffect(() => {
-    const fetchQuiz = async () => {
+    const fetchData = async () => {
+      if (isNew) {
+        try {
+          const coursesRes = await api.get('/courses/teacher/my');
+          setCourses(coursesRes.data);
+        } catch (e) {
+          console.error(e);
+        }
+        setLoading(false);
+        setQuiz({ id: '', title: 'Nouveau Quiz', questions: [] });
+        return;
+      }
       try {
         const res = await api.get(`/quizzes/${id}`);
         setQuiz(res.data);
@@ -57,8 +71,8 @@ const TeacherQuizEditor = () => {
         setLoading(false);
       }
     };
-    fetchQuiz();
-  }, [id]);
+    fetchData();
+  }, [id, isNew]);
 
   const addQuestion = () => {
     setQuestions(prev => [...prev, { text: '', options: ['', '', '', ''], answer: '' }]);
@@ -83,13 +97,26 @@ const TeacherQuizEditor = () => {
   };
 
   const handleSave = async () => {
-    if (!quiz) return;
+    if (!quiz && !isNew) return;
     setSaving(true);
     try {
-      await api.put(`/quizzes/${quiz.id}`, {
-        title,
-        questions,
-      });
+      if (isNew) {
+        if (!selectedCourseId) {
+          alert('Veuillez sélectionner un cours');
+          setSaving(false);
+          return;
+        }
+        await api.post('/quizzes', {
+          title,
+          courseId: selectedCourseId,
+          questions,
+        });
+      } else {
+        await api.put(`/quizzes/${quiz!.id}`, {
+          title,
+          questions,
+        });
+      }
       navigate('/teacher/quizzes');
     } catch (error) {
       console.error(error);
@@ -151,6 +178,26 @@ const TeacherQuizEditor = () => {
       </div>
 
       <Card className="p-8 border-none shadow-xl shadow-slate-200/40">
+        {isNew && (
+          <>
+            <CardHeader className="p-0 mb-6">
+              <CardTitle>Choisir un cours</CardTitle>
+              <CardDescription>Sélectionnez le cours pour ce quiz.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0 mb-6">
+              <select
+                value={selectedCourseId}
+                onChange={(e) => setSelectedCourseId(e.target.value)}
+                className="h-12 w-full rounded-xl border border-slate-100 bg-white px-4 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-200"
+              >
+                <option value="">Sélectionner un cours</option>
+                {courses.map(c => (
+                  <option key={c.id} value={c.id}>{c.title}</option>
+                ))}
+              </select>
+            </CardContent>
+          </>
+        )}
         <CardHeader className="p-0 mb-6">
           <CardTitle>Titre</CardTitle>
           <CardDescription>Nom affiché aux étudiants.</CardDescription>
